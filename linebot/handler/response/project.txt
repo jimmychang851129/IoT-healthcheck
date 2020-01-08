@@ -1,0 +1,21 @@
+我的github : https://github.com/jimmychang851129
+以下列出一些我認為重要的project
+
+1. CyberAutonomy
+https://www.csie.ntu.edu.tw/~hchsiao/pub/2019_WWW.pdf
+此project為分析G7工業國家政府網站的安全性，依據Alexa排名，分別取得個國家流量前100的網站，接著做廣泛的分析，包括分析https、TLS cipher suite、SSL vulnerability, CA, Content Provider等等的，主要提出這些政府網站，有很大的比例依賴外國的資源(CA, Content provider)，且很多過時的TLS版本，因此可能造成資安上的攻擊或危險。
+這篇論文有上2019 Web Conference(aka WWW)，我是第四作者，負責前期G7國家的https,SSL vulnerabilty爬蟲和Content Provider爬蟲、分析。
+
+2. 口琴簡譜辨識
+https://github.com/jimmychang851129/DSP_2018Spring
+這是在修語音辨識時的final project(自訂主題)，目的在於希望能夠直接吹奏者吹奏口琴，接著程式將聽到的口琴聲音自動轉成簡譜。
+至於為什麼是口琴呢？ 因為小弟略懂口琴。
+主要流程為利用程式搜集足夠的train data(自己吹音階很多遍Orz)，接著preprocess，如將音檔轉成mfcc vector並去除noise，接著使用Autoencoder + DNN的方式來訓練model，利用訓練好的model來predict吹奏者之後吹奏音符，並將其轉成簡譜。
+這是一個ML的project，利用各種方式訓練出模型(Random forrest, DNN)，並比較哪個效果比較好
+
+3. 證書區塊鏈
+https://certproof.nchc.org.tw/#/overview
+這是在實習時做的專案
+區塊鏈有不可篡改、分散式的特性，可以避免Single point failure，也能夠讓一群不互相信任的人達成共識
+因此我們打算利用區塊鏈的特性來進行證書的發布、儲存、撤銷。一來避免一個單位掌握所有的證書，二來能夠為所有發行的證書留下不可篡改的紀錄。
+我們使用Ethereum和IPFS來作分散式儲存跟驗證。此系統已經上架，目前在台中有deploy。

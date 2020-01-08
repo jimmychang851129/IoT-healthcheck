@@ -1,34 +1,38 @@
 import psutil
-import splunklib.client as client
-import splunklib.results as results
-import json
-import os
+import time,os
+import socket
+import jsonType, Config
 import datetime
-from argparse import ArgumentParser
-import Config,jsonType
+import server # tmp
 
-SplunkInfo = Config.SplunkInfo
+##########
+# config #
+##########
+bashpath = "/Users/jimmy/.zsh_history"
+bashcnt = "/Users/jimmy/Desktop/IoT-healthcheck/bash_cnt"
+danger_cmd = [
+	"/bin/sh",
+	"/bin/bash",
+	"/etc/",
+	"/var/",
+]
+device = 'mac'
 
+
+ServerInfo = Config.ServerHost
+
+############
+# get time #
+############
 def getTime():
 	t = datetime.datetime.now()
 	d = t.strftime("%Y-%m-%d %H:%M:%S")
 	k = int(t.strftime("%Y%m%d%H%M%S"))
 	return d,k
 
-def Splunk_Connection(index):
-	service,Index = 0,0
-	try:
-		service = client.connect(
-		    host=SplunkInfo['HOST'],
-		    port=SplunkInfo['PORT'],
-		    username=SplunkInfo['USERNAME'],
-		    password=SplunkInfo['PASSWORD'])
-		Index = service.indexes[index]
-	except Exception,e:
-		print("Splunk server connection error")
-		print(str(e))
-	return Index
-
+############################
+# system status inspection #
+############################
 def ReportStatus():
 	cpu_usage = psutil.cpu_percent()
 	memory_usage = dict(psutil.virtual_memory()._asdict())
@@ -36,30 +40,64 @@ def ReportStatus():
 	document['CPU_Usage']= cpu_usage
 	document['Memory_Usage'] = memory_usage
 	document['date'],document['timestamp'] = getTime()
-	document['device'] = "mac"
+	document['device'] = device
 	return document
 
-def UploadToSplunk(document):
-	ret = 0
-	Index = 0
-	try:
-		Index = Splunk_Connection(SplunkInfo['DefaultIndex'])
-		filename = document['device']+"_"+document['type']+"_"+str(document['timestamp'])
-		print("fimename = ",filename)
-		Index.submit(json.dumps(document),sourcetype='json',host=document['device'],source=filename)
-		ret = 1
-	except Exception,e:
-		print("[client.py UploadToSplunk error]")
-		print(str(e))
-	finally:
-		return ret
+##################
+# log inspection #
+##################
+def ReportSyslog():
+	t = 0
+	l = []
+	warn = []
+	cnt = 0
+	with open(bashcnt,'r') as f:
+		t = int(f.read().strip())
+	with open(bashpath) as f:
+		for line in f:
+			if cnt >= t:
+				l.append(line.strip())
+			cnt += 1
+	with open(bashcnt,'w') as fw:
+		fw.write(str(cnt))
+	for cmd in l:
+		if cmd in danger_cmd:
+			warn.append(cmd)
+	document = dict(jsonType.systemLog)
+	if len(warn) != 0:
+		document['date'],document['timestamp'] = getTime()
+		document['device'] = device
+		document['log_info'] = warn
+	else:
+		document = 0
+	return document
+
+
+def ReportPM25(mode=0):
+	data = []
+	if mode == 0:
+		with open("fake.txt",'r') as f:
+			for line in f:
+				data.append(float(line.strip()))
+	return data
+
+# def SockConnection():
+# 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# 	print("start connection...")
+# 	try:
+# 	    sock.connect((ServerInfo['HOST'], ServerInfo['PORT']))
+# 	    print("connection success")
+# 	except:
+# 	    print("Cannot connect to the server")
 
 def main():
-	ret = ReportStatus()
-	print("ret = ",ret)
-	r = UploadToSplunk(ret)
-	if r == 0:
-		print("failed to upload data to splunk...")
+	data1 = ReportStatus()
+	data2 = ReportSyslog()
+	if server.UploadToSplunk(data1) == 0:
+		print("[client.py] Upload data1 to splunk error")
+	if data2 != 0:
+		if server.UploadToSplunk(data2) == 0:
+			print("[client.py] Upload data2 to splunk error")
 
 if __name__ == "__main__":
 	main()

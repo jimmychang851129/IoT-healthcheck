@@ -22,3 +22,9 @@ FunctionStatus ={
 	"ActualOutput":"",
 	"date":""
 }
+
+tasks = {
+	"device":"",
+	"task":"",
+	"timestamp":""
+}
